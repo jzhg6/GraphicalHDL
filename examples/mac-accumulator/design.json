@@ -1,0 +1,661 @@
+{
+  "schemaVersion": "0.1",
+  "project": {
+    "id": "project_mac_accumulator",
+    "name": "MAC Accumulator Demo",
+    "topModuleName": "mac_demo_top"
+  },
+  "design": {
+    "clockDomain": {
+      "clockPortId": "top_clk",
+      "resetPortId": "top_rst",
+      "clockEdge": "rising",
+      "resetKind": "synchronous",
+      "resetPolarity": "activeHigh"
+    },
+    "top": {
+      "id": "top_mac_demo",
+      "name": "mac_demo_top",
+      "description": "将乘加核心连接到一级输出寄存器。",
+      "ports": [
+        {
+          "id": "top_clk",
+          "name": "clk",
+          "direction": "input",
+          "width": 1,
+          "role": "clock"
+        },
+        {
+          "id": "top_rst",
+          "name": "rst",
+          "direction": "input",
+          "width": 1,
+          "role": "reset"
+        },
+        {
+          "id": "top_a",
+          "name": "a",
+          "direction": "input",
+          "width": 8,
+          "role": "data"
+        },
+        {
+          "id": "top_b",
+          "name": "b",
+          "direction": "input",
+          "width": 8,
+          "role": "data"
+        },
+        {
+          "id": "top_accumulate",
+          "name": "accumulate",
+          "direction": "input",
+          "width": 1,
+          "role": "control"
+        },
+        {
+          "id": "top_result",
+          "name": "result",
+          "direction": "output",
+          "width": 16,
+          "role": "data"
+        }
+      ],
+      "instances": [
+        {
+          "id": "inst_mac_core",
+          "name": "u_mac_core",
+          "moduleId": "module_mac_core",
+          "description": "执行乘法、可选累加并保存 accumulator。"
+        },
+        {
+          "id": "inst_output_stage",
+          "name": "u_output_stage",
+          "moduleId": "module_output_stage",
+          "description": "增加一级输出 Register。"
+        }
+      ],
+      "nets": [
+        {
+          "id": "top_net_clk",
+          "name": "clk_bus",
+          "driver": {
+            "kind": "topPort",
+            "portId": "top_clk"
+          },
+          "sinks": [
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_mac_core",
+              "portId": "mac_clk"
+            },
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_output_stage",
+              "portId": "stage_clk"
+            }
+          ]
+        },
+        {
+          "id": "top_net_rst",
+          "name": "rst_bus",
+          "driver": {
+            "kind": "topPort",
+            "portId": "top_rst"
+          },
+          "sinks": [
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_mac_core",
+              "portId": "mac_rst"
+            },
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_output_stage",
+              "portId": "stage_rst"
+            }
+          ]
+        },
+        {
+          "id": "top_net_a",
+          "name": "a_bus",
+          "driver": {
+            "kind": "topPort",
+            "portId": "top_a"
+          },
+          "sinks": [
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_mac_core",
+              "portId": "mac_a"
+            }
+          ]
+        },
+        {
+          "id": "top_net_b",
+          "name": "b_bus",
+          "driver": {
+            "kind": "topPort",
+            "portId": "top_b"
+          },
+          "sinks": [
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_mac_core",
+              "portId": "mac_b"
+            }
+          ]
+        },
+        {
+          "id": "top_net_accumulate",
+          "name": "accumulate_bus",
+          "driver": {
+            "kind": "topPort",
+            "portId": "top_accumulate"
+          },
+          "sinks": [
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_mac_core",
+              "portId": "mac_accumulate"
+            }
+          ]
+        },
+        {
+          "id": "top_net_core_result",
+          "name": "core_result",
+          "driver": {
+            "kind": "instancePort",
+            "instanceId": "inst_mac_core",
+            "portId": "mac_result"
+          },
+          "sinks": [
+            {
+              "kind": "instancePort",
+              "instanceId": "inst_output_stage",
+              "portId": "stage_data_in"
+            }
+          ]
+        },
+        {
+          "id": "top_net_result",
+          "name": "stage_result",
+          "driver": {
+            "kind": "instancePort",
+            "instanceId": "inst_output_stage",
+            "portId": "stage_result"
+          },
+          "sinks": [
+            {
+              "kind": "topPort",
+              "portId": "top_result"
+            }
+          ]
+        }
+      ]
+    },
+    "modules": [
+      {
+        "id": "module_mac_core",
+        "name": "mac_core",
+        "description": "无符号 8x8 乘法，可选择覆盖或累加到 16-bit accumulator。",
+        "ports": [
+          {
+            "id": "mac_clk",
+            "name": "clk",
+            "direction": "input",
+            "width": 1,
+            "role": "clock"
+          },
+          {
+            "id": "mac_rst",
+            "name": "rst",
+            "direction": "input",
+            "width": 1,
+            "role": "reset"
+          },
+          {
+            "id": "mac_a",
+            "name": "a",
+            "direction": "input",
+            "width": 8,
+            "role": "data"
+          },
+          {
+            "id": "mac_b",
+            "name": "b",
+            "direction": "input",
+            "width": 8,
+            "role": "data"
+          },
+          {
+            "id": "mac_accumulate",
+            "name": "accumulate",
+            "direction": "input",
+            "width": 1,
+            "role": "control"
+          },
+          {
+            "id": "mac_result",
+            "name": "result",
+            "direction": "output",
+            "width": 16,
+            "role": "data"
+          }
+        ],
+        "implementation": {
+          "primitives": [
+            {
+              "id": "mac_mul",
+              "name": "multiply",
+              "kind": "mul",
+              "aWidth": 8,
+              "bWidth": 8
+            },
+            {
+              "id": "mac_add",
+              "name": "accumulate_add",
+              "kind": "add",
+              "width": 16
+            },
+            {
+              "id": "mac_mux",
+              "name": "accumulate_select",
+              "kind": "mux2",
+              "width": 16
+            },
+            {
+              "id": "mac_reg",
+              "name": "accumulator",
+              "kind": "reg",
+              "width": 16,
+              "resetValue": "0"
+            }
+          ],
+          "nets": [
+            {
+              "id": "mac_net_a",
+              "name": "a_value",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "mac_a"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_mul",
+                  "pin": "a"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_b",
+              "name": "b_value",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "mac_b"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_mul",
+                  "pin": "b"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_product",
+              "name": "product",
+              "driver": {
+                "kind": "primitivePin",
+                "primitiveId": "mac_mul",
+                "pin": "y"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_add",
+                  "pin": "a"
+                },
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_mux",
+                  "pin": "a"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_acc_q",
+              "name": "accumulator_q",
+              "driver": {
+                "kind": "primitivePin",
+                "primitiveId": "mac_reg",
+                "pin": "q"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_add",
+                  "pin": "b"
+                },
+                {
+                  "kind": "modulePort",
+                  "portId": "mac_result"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_sum",
+              "name": "accumulated_sum",
+              "driver": {
+                "kind": "primitivePin",
+                "primitiveId": "mac_add",
+                "pin": "y"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_mux",
+                  "pin": "b"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_select",
+              "name": "accumulate_select",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "mac_accumulate"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_mux",
+                  "pin": "sel"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_next",
+              "name": "next_accumulator",
+              "driver": {
+                "kind": "primitivePin",
+                "primitiveId": "mac_mux",
+                "pin": "y"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_reg",
+                  "pin": "d"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_clk",
+              "name": "clock_signal",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "mac_clk"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_reg",
+                  "pin": "clk"
+                }
+              ]
+            },
+            {
+              "id": "mac_net_rst",
+              "name": "reset_signal",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "mac_rst"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "mac_reg",
+                  "pin": "rst"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "module_output_stage",
+        "name": "output_stage",
+        "description": "为 MAC 结果增加一级同步输出 Register。",
+        "ports": [
+          {
+            "id": "stage_clk",
+            "name": "clk",
+            "direction": "input",
+            "width": 1,
+            "role": "clock"
+          },
+          {
+            "id": "stage_rst",
+            "name": "rst",
+            "direction": "input",
+            "width": 1,
+            "role": "reset"
+          },
+          {
+            "id": "stage_data_in",
+            "name": "data_in",
+            "direction": "input",
+            "width": 16,
+            "role": "data"
+          },
+          {
+            "id": "stage_result",
+            "name": "result",
+            "direction": "output",
+            "width": 16,
+            "role": "data"
+          }
+        ],
+        "implementation": {
+          "primitives": [
+            {
+              "id": "stage_reg",
+              "name": "output_register",
+              "kind": "reg",
+              "width": 16,
+              "resetValue": "0"
+            }
+          ],
+          "nets": [
+            {
+              "id": "stage_net_data",
+              "name": "input_value",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "stage_data_in"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "stage_reg",
+                  "pin": "d"
+                }
+              ]
+            },
+            {
+              "id": "stage_net_q",
+              "name": "registered_result",
+              "driver": {
+                "kind": "primitivePin",
+                "primitiveId": "stage_reg",
+                "pin": "q"
+              },
+              "sinks": [
+                {
+                  "kind": "modulePort",
+                  "portId": "stage_result"
+                }
+              ]
+            },
+            {
+              "id": "stage_net_clk",
+              "name": "clock_signal",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "stage_clk"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "stage_reg",
+                  "pin": "clk"
+                }
+              ]
+            },
+            {
+              "id": "stage_net_rst",
+              "name": "reset_signal",
+              "driver": {
+                "kind": "modulePort",
+                "portId": "stage_rst"
+              },
+              "sinks": [
+                {
+                  "kind": "primitivePin",
+                  "primitiveId": "stage_reg",
+                  "pin": "rst"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "layout": {
+    "views": [
+      {
+        "level": 1,
+        "ownerId": "top_mac_demo",
+        "nodes": [
+          {
+            "elementId": "inst_mac_core",
+            "x": 260,
+            "y": 180
+          },
+          {
+            "elementId": "inst_output_stage",
+            "x": 600,
+            "y": 180
+          }
+        ],
+        "viewport": {
+          "x": 0,
+          "y": 0,
+          "zoom": 1
+        }
+      },
+      {
+        "level": 2,
+        "ownerId": "module_mac_core",
+        "nodes": [
+          {
+            "elementId": "mac_clk",
+            "x": 80,
+            "y": 60
+          },
+          {
+            "elementId": "mac_rst",
+            "x": 80,
+            "y": 120
+          },
+          {
+            "elementId": "mac_a",
+            "x": 80,
+            "y": 200
+          },
+          {
+            "elementId": "mac_b",
+            "x": 80,
+            "y": 270
+          },
+          {
+            "elementId": "mac_accumulate",
+            "x": 80,
+            "y": 340
+          },
+          {
+            "elementId": "mac_result",
+            "x": 620,
+            "y": 200
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "ownerId": "module_mac_core",
+        "nodes": [
+          {
+            "elementId": "mac_mul",
+            "x": 240,
+            "y": 180
+          },
+          {
+            "elementId": "mac_add",
+            "x": 450,
+            "y": 100
+          },
+          {
+            "elementId": "mac_mux",
+            "x": 650,
+            "y": 180
+          },
+          {
+            "elementId": "mac_reg",
+            "x": 650,
+            "y": 360
+          }
+        ]
+      },
+      {
+        "level": 2,
+        "ownerId": "module_output_stage",
+        "nodes": [
+          {
+            "elementId": "stage_clk",
+            "x": 80,
+            "y": 60
+          },
+          {
+            "elementId": "stage_rst",
+            "x": 80,
+            "y": 120
+          },
+          {
+            "elementId": "stage_data_in",
+            "x": 80,
+            "y": 220
+          },
+          {
+            "elementId": "stage_result",
+            "x": 620,
+            "y": 220
+          }
+        ]
+      },
+      {
+        "level": 3,
+        "ownerId": "module_output_stage",
+        "nodes": [
+          {
+            "elementId": "stage_reg",
+            "x": 360,
+            "y": 220
+          }
+        ]
+      }
+    ]
+  }
+}

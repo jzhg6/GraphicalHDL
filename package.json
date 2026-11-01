@@ -1,0 +1,58 @@
+{
+  "name": "graphicalhdl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "generate:check": "tsx scripts/generate.ts --check",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "lint": "biome lint .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=.cache/ms-playwright playwright test",
+    "build": "npm run typecheck && npm run build --workspace @graphicalhdl/web",
+    "dev": "npm run dev --workspace @graphicalhdl/web",
+    "cli": "tsx packages/cli/src/main.ts",
+    "example:validate": "npm run cli -- validate examples/mac-accumulator/design.json",
+    "example:compile": "npm run cli -- compile examples/mac-accumulator/design.json --out build/mac-accumulator",
+    "example:check": "npm run cli -- check examples/mac-accumulator/design.json --out build/mac-accumulator",
+    "preflight": "tsx scripts/preflight.ts",
+    "rtl:lint": "tsx scripts/verify-rtl.ts lint",
+    "rtl:sim": "tsx scripts/verify-rtl.ts sim",
+    "rtl:synth": "tsx scripts/verify-rtl.ts synth",
+    "verify": "npm run generate:check && npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run example:compile && npm run example:check && npm run rtl:lint && npm run rtl:sim",
+    "verify:ci": "npm run verify && npm run rtl:synth && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "@noble/hashes": "2.4.0",
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "@xyflow/react": "12.12.0",
+    "ajv": "8.20.0",
+    "commander": "15.0.0",
+    "fflate": "0.8.3",
+    "json-schema-to-typescript": "16.0.0",
+    "json-source-map": "0.6.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

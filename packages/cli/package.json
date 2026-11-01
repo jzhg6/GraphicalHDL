@@ -1,0 +1,13 @@
+{
+  "name": "@graphicalhdl/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "graphicalhdl": "./src/main.ts"
+  },
+  "dependencies": {
+    "@graphicalhdl/compiler": "0.1.0",
+    "@graphicalhdl/ir": "0.1.0"
+  }
+}

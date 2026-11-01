@@ -1,0 +1,9 @@
+node_modules/
+build/
+dist/
+coverage/
+test-results/
+playwright-report/
+.cache/
+apps/web/dist/
+*.log

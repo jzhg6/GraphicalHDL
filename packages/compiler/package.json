@@ -1,0 +1,12 @@
+{
+  "name": "@graphicalhdl/compiler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@graphicalhdl/ir": "0.1.0"
+  }
+}

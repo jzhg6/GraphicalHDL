@@ -1,0 +1,553 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://graphicalhdl.dev/schemas/graphicalhdl-design.schema.json",
+  "title": "GraphicalHDL Design Document v0.1",
+  "description": "GraphicalHDL v0.1 的权威设计文档。design 参与编译，layout 仅用于显示。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "project", "design"],
+  "properties": {
+    "schemaVersion": {
+      "const": "0.1",
+      "description": "GraphicalHDL 文档格式版本。"
+    },
+    "project": {
+      "$ref": "#/$defs/project"
+    },
+    "design": {
+      "$ref": "#/$defs/design"
+    },
+    "layout": {
+      "$ref": "#/$defs/layout"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "stableId": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.:-]*$",
+      "minLength": 1,
+      "maxLength": 160
+    },
+    "width": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4096
+    },
+    "literal": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*|0[xX][0-9a-fA-F]+)$"
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "topModuleName"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId",
+          "description": "工程的稳定 ID。"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "面向用户显示的工程名称。"
+        },
+        "topModuleName": {
+          "$ref": "#/$defs/identifier",
+          "description": "生成 RTL 时使用的顶层 module 名称。"
+        }
+      }
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clockDomain", "top", "modules"],
+      "properties": {
+        "clockDomain": {
+          "$ref": "#/$defs/clockDomain"
+        },
+        "top": {
+          "$ref": "#/$defs/topDefinition"
+        },
+        "modules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/moduleDefinition"
+          }
+        }
+      }
+    },
+    "clockDomain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["clockPortId", "resetPortId", "clockEdge", "resetKind", "resetPolarity"],
+      "properties": {
+        "clockPortId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "resetPortId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "clockEdge": {
+          "const": "rising"
+        },
+        "resetKind": {
+          "const": "synchronous"
+        },
+        "resetPolarity": {
+          "const": "activeHigh"
+        }
+      }
+    },
+    "port": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "direction", "width", "role"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "direction": {
+          "enum": ["input", "output"]
+        },
+        "width": {
+          "$ref": "#/$defs/width"
+        },
+        "role": {
+          "enum": ["data", "control", "clock", "reset"]
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "moduleInstance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "moduleId"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "moduleId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500
+        }
+      }
+    },
+    "topPortEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "portId"],
+      "properties": {
+        "kind": {
+          "const": "topPort"
+        },
+        "portId": {
+          "$ref": "#/$defs/stableId"
+        }
+      }
+    },
+    "instancePortEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "instanceId", "portId"],
+      "properties": {
+        "kind": {
+          "const": "instancePort"
+        },
+        "instanceId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "portId": {
+          "$ref": "#/$defs/stableId"
+        }
+      }
+    },
+    "topEndpoint": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/topPortEndpoint"
+        },
+        {
+          "$ref": "#/$defs/instancePortEndpoint"
+        }
+      ]
+    },
+    "topNet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "driver", "sinks"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "driver": {
+          "$ref": "#/$defs/topEndpoint"
+        },
+        "sinks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/topEndpoint"
+          }
+        }
+      }
+    },
+    "topDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "ports", "instances", "nets"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "instances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/moduleInstance"
+          }
+        },
+        "nets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/topNet"
+          }
+        }
+      }
+    },
+    "modulePortEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "portId"],
+      "properties": {
+        "kind": {
+          "const": "modulePort"
+        },
+        "portId": {
+          "$ref": "#/$defs/stableId"
+        }
+      }
+    },
+    "primitivePinEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "primitiveId", "pin"],
+      "properties": {
+        "kind": {
+          "const": "primitivePin"
+        },
+        "primitiveId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "pin": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      }
+    },
+    "moduleEndpoint": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/modulePortEndpoint"
+        },
+        {
+          "$ref": "#/$defs/primitivePinEndpoint"
+        }
+      ]
+    },
+    "moduleNet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "driver", "sinks"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "driver": {
+          "$ref": "#/$defs/moduleEndpoint"
+        },
+        "sinks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/moduleEndpoint"
+          }
+        }
+      }
+    },
+    "constPrimitive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "width", "value"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "const"
+        },
+        "width": {
+          "$ref": "#/$defs/width"
+        },
+        "value": {
+          "$ref": "#/$defs/literal"
+        }
+      }
+    },
+    "addPrimitive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "width"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "add"
+        },
+        "width": {
+          "$ref": "#/$defs/width"
+        }
+      }
+    },
+    "mulPrimitive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "aWidth", "bWidth"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "mul"
+        },
+        "aWidth": {
+          "$ref": "#/$defs/width"
+        },
+        "bWidth": {
+          "$ref": "#/$defs/width"
+        }
+      }
+    },
+    "mux2Primitive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "width"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "mux2"
+        },
+        "width": {
+          "$ref": "#/$defs/width"
+        }
+      }
+    },
+    "regPrimitive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "width", "resetValue"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "kind": {
+          "const": "reg"
+        },
+        "width": {
+          "$ref": "#/$defs/width"
+        },
+        "resetValue": {
+          "$ref": "#/$defs/literal"
+        }
+      }
+    },
+    "primitive": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/constPrimitive"
+        },
+        {
+          "$ref": "#/$defs/addPrimitive"
+        },
+        {
+          "$ref": "#/$defs/mulPrimitive"
+        },
+        {
+          "$ref": "#/$defs/mux2Primitive"
+        },
+        {
+          "$ref": "#/$defs/regPrimitive"
+        }
+      ]
+    },
+    "moduleImplementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primitives", "nets"],
+      "properties": {
+        "primitives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/primitive"
+          }
+        },
+        "nets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/moduleNet"
+          }
+        }
+      }
+    },
+    "moduleDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "ports", "implementation"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "name": {
+          "$ref": "#/$defs/identifier"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/port"
+          }
+        },
+        "implementation": {
+          "$ref": "#/$defs/moduleImplementation"
+        }
+      }
+    },
+    "layoutNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["elementId", "x", "y"],
+      "properties": {
+        "elementId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "viewport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "zoom"],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "zoom": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 4
+        }
+      }
+    },
+    "layoutView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "ownerId", "nodes"],
+      "properties": {
+        "level": {
+          "enum": [1, 2, 3]
+        },
+        "ownerId": {
+          "$ref": "#/$defs/stableId"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/layoutNode"
+          }
+        },
+        "viewport": {
+          "$ref": "#/$defs/viewport"
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["views"],
+      "properties": {
+        "views": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/layoutView"
+          }
+        }
+      }
+    }
+  }
+}

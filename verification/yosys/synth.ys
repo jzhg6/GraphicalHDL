@@ -1,0 +1,11 @@
+read_verilog -sv build/mac-accumulator/rtl/mac_core.sv
+read_verilog -sv build/mac-accumulator/rtl/output_stage.sv
+read_verilog -sv build/mac-accumulator/rtl/mac_demo_top.sv
+hierarchy -check -top mac_demo_top
+proc
+opt
+check
+synth -top mac_demo_top -noabc
+check
+stat
+write_verilog -noattr build/yosys/mac_demo_top_netlist.v
